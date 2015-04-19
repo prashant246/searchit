@@ -24,14 +24,16 @@ def crawl_web(seed): # returns index, graph of inlinks
     crawled = []
     graph = {}  # <url>, [list of pages it links to]
     index = {} 
-    asd  = 1
-    while tocrawl and asd <= 10:
-        asd += 1 
+    depth = {}
+    depth[seed] = 1
+    while tocrawl: 
         page = tocrawl.pop()
-        if page not in crawled:
+        if page not in crawled and depth[page] <= 5:
             content = get_page(page)
             add_page_to_index(index, page, content)
             outlinks = get_all_links(content)
+            for outlink in outlinks :
+                depth[outlink] = depth[page] + 1
             graph[page] = outlinks
             union(tocrawl, outlinks)
             crawled.append(page)
@@ -78,7 +80,8 @@ def add_page_to_index(index, url, content):
         
 def add_to_index(index, keyword, url):
     if keyword in index:
-        index[keyword].append(url)
+        if not url in index[keyword] :
+            index[keyword].append(url)
     else:
         index[keyword] = [url]
 
@@ -87,8 +90,23 @@ def lookup(index, keyword):
         return index[keyword]
     else:
         return None
+        
+def result(index,keyword,ranks) :
+    pages = lookup(index, keyword)
+    if pages == None :
+        print "Searched Keyword not found"
+    else :
+        lin = {}
+        for page in pages :
+            lin[page] = ranks[page]
+        for each in  sorted(lin, key = lin.get) :
+            print each
+    return
 
-index, graph = crawl_web('http://www.google.co.in')
+print "Enter the seed page"
+seed = raw_input()
+print "Enter a keyword to search"
+s = raw_input()
+index, graph = crawl_web(seed)
 ranks = compute_ranks(graph)
-for rank in ranks :
-    print rank,ranks[rank]
+result(index,s,ranks)
